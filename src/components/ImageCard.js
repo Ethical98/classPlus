@@ -20,6 +20,8 @@ const ImageCard = (props) => {
       const span = Math.ceil(height / 10);
 
       setSpans(span);
+    } else {
+      setSpans(10);
     }
   };
 
