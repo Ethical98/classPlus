@@ -27,7 +27,6 @@ function App() {
       if (observer.current) observer.current.disconnect();
       observer.current = new IntersectionObserver((entries) => {
         if (entries[0].isIntersecting && hasMore) {
-          console.log('visible');
           setPageNumber((prevpageNumber) => prevpageNumber + 1);
         }
       });
@@ -51,12 +50,11 @@ function App() {
   const getImages = async (url) => {
     try {
       setLoading(true);
+      window.scrollTo(0, 0);
       const { data } = await axios.get(url);
-      if (data) {
-        console.log(data.photos.photo);
-        setImages((previmages) => {
-          return [...new Set([...previmages, ...data.photos.photo])];
-        });
+      if (data.photos.photo.length === 100) {
+        setImages([...data.photos.photo]);
+
         setHasMore(data.photos.photo.length > 0);
         setLoading(false);
       }
@@ -141,9 +139,7 @@ function App() {
         )}
       </Container>
       <Container className='imageGrid' style={{ marginTop: '15vh' }}>
-        {images &&
-          !loading &&
-          !message &&
+        {images.length > 0 &&
           images.map((image, index) => {
             const url = `https://live.staticflickr.com/${image.server}/${image.id}_${image.secret}.jpg`;
             id = id + 1;
@@ -153,8 +149,9 @@ function App() {
                   <ImageCard key={id} alt={image.tilte} url={url} />
                 </div>
               );
+            } else {
+              return <ImageCard key={id} alt={image.tilte} url={url} />;
             }
-            return <ImageCard key={id} alt={image.tilte} url={url} />;
           })}
       </Container>
     </>

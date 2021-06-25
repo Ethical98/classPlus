@@ -8,21 +8,18 @@ const ImageCard = (props) => {
   const imageRef = useRef('');
 
   useEffect(() => {
-    if (props.url) {
-      imageRef.current.addEventListener('load', setSpan);
-    }
-  }, [props]);
+    console.log('hello');
+    imageRef.current.addEventListener('load', setSpan);
+
+    // eslint-disable-next-line
+  }, []);
 
   const setSpan = () => {
-    if (props.url) {
-      const height = imageRef.current.clientHeight;
+    const height = imageRef.current.clientHeight;
 
-      const span = Math.ceil(height / 10);
+    const span = Math.ceil(height / 10);
 
-      setSpans(span);
-    } else {
-      setSpans(10);
-    }
+    setSpans(span);
   };
 
   return (
