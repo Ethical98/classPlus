@@ -14,11 +14,13 @@ const ImageCard = (props) => {
   }, [props]);
 
   const setSpan = () => {
-    const height = imageRef.current.clientHeight;
+    if (props.url) {
+      const height = imageRef.current.clientHeight;
 
-    const span = Math.ceil(height / 10);
+      const span = Math.ceil(height / 10);
 
-    setSpans(span);
+      setSpans(span);
+    }
   };
 
   return (
