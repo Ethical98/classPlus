@@ -8,8 +8,10 @@ const ImageCard = (props) => {
   const imageRef = useRef('');
 
   useEffect(() => {
-    imageRef.current.addEventListener('load', setSpan);
-  }, [imageRef, props]);
+    if (props.url) {
+      imageRef.current.addEventListener('load', setSpan);
+    }
+  }, [props]);
 
   const setSpan = () => {
     const height = imageRef.current.clientHeight;

@@ -1,17 +1,42 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import './App.css';
 import axios from 'axios';
 import { Container, Navbar, Form, InputGroup, Badge } from 'react-bootstrap';
-import ImageList from './components/ImageList';
+import ImageCard from './components/ImageCard';
 import Loader from './components/Loader';
 import Message from './components/Message';
+import './components/ImageGrid.css';
 
 function App() {
   const [searchHistory, setSearchHistory] = useState([]);
-  const [images, setImages] = useState('');
+  const [images, setImages] = useState([]);
   const [term, setTerm] = useState('');
   const [debouncedTerm, setDebouncedTerm] = useState(term);
   const [message, setMessage] = useState('');
+  const [pageNumber, setPageNumber] = useState(1);
+  const [loading, setLoading] = useState(true);
+  const [hasMore, setHasMore] = useState(false);
+
+  var id = 0;
+
+  const observer = useRef();
+
+  const lastImageRef = useCallback(
+    (x) => {
+      if (loading) return;
+      if (observer.current) observer.current.disconnect();
+      observer.current = new IntersectionObserver((entries) => {
+        if (entries[0].isIntersecting && hasMore) {
+          console.log('visible');
+          setPageNumber((prevpageNumber) => prevpageNumber + 1);
+        }
+      });
+      if (x) {
+        observer.current.observe(x);
+      }
+    },
+    [loading, hasMore]
+  );
 
   useEffect(() => {
     const timerId = setTimeout(() => {
@@ -25,9 +50,15 @@ function App() {
 
   const getImages = async (url) => {
     try {
+      setLoading(true);
       const { data } = await axios.get(url);
       if (data) {
-        setImages([...data.photos.photo]);
+        console.log(data.photos.photo);
+        setImages((previmages) => {
+          return [...new Set([...previmages, ...data.photos.photo])];
+        });
+        setHasMore(data.photos.photo.length > 0);
+        setLoading(false);
       }
     } catch (error) {
       setMessage('Something went wrong...!! Please Refresh');
@@ -35,9 +66,11 @@ function App() {
   };
 
   useEffect(() => {
-    const url = `https://api.flickr.com/services/rest/?method=flickr.photos.getRecent&api_key=${process.env.REACT_APP_FLICKR_KEY}&format=json&nojsoncallback=1`;
+    const url = `https://api.flickr.com/services/rest/?method=flickr.photos.getRecent&api_key=${process.env.REACT_APP_FLICKR_KEY}&page=${pageNumber}&format=json&nojsoncallback=1`;
     getImages(url);
-  }, []);
+
+    // eslint-disable-next-line
+  }, [pageNumber]);
 
   const searchSuggestions = async (x) => {
     setTerm(x);
@@ -59,6 +92,7 @@ function App() {
     : [];
 
   const getSearchResults = async () => {
+    setImages([]);
     setSearchHistory([...searchHistory, term]);
     const searchItems = [...new Set(searchHistory)];
     localStorage.setItem('H', JSON.stringify(searchItems));
@@ -85,7 +119,7 @@ function App() {
                   value={term}
                   required
                   type='text'
-                  placeholder='Search'
+                  placeholder='Start Searching here...'
                   onChange={(e) => setTerm(e.target.value)}
                 />
               </InputGroup>
@@ -102,11 +136,26 @@ function App() {
       <Container style={{ marginTop: '15vh' }}>
         {message ? (
           <Message variant='danger'>{message}</Message>
-        ) : images ? (
-          <ImageList images={images}></ImageList>
         ) : (
-          <Loader />
+          loading && <Loader />
         )}
+      </Container>
+      <Container className='imageGrid' style={{ marginTop: '15vh' }}>
+        {images &&
+          !loading &&
+          !message &&
+          images.map((image, index) => {
+            const url = `https://live.staticflickr.com/${image.server}/${image.id}_${image.secret}.jpg`;
+            id = id + 1;
+            if (images.length === index + 1) {
+              return (
+                <div key={id} ref={lastImageRef}>
+                  <ImageCard key={id} alt={image.tilte} url={url} />
+                </div>
+              );
+            }
+            return <ImageCard key={id} alt={image.tilte} url={url} />;
+          })}
       </Container>
     </>
   );
