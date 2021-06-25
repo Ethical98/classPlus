@@ -17,6 +17,8 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [hasMore, setHasMore] = useState(false);
 
+  const url1 = `https://api.flickr.com/services/rest/?method=flickr.photos.getRecent&api_key=${process.env.REACT_APP_FLICKR_KEY}&page=${pageNumber}&format=json&nojsoncallback=1`;
+  const url2 = `https://api.flickr.com/services/rest/?method=flickr.photos.search&api_key=${process.env.REACT_APP_FLICKR_KEY}&tags=${term}&page=${pageNumber}&format=json&nojsoncallback=1`;
   var id = 0;
 
   const observer = useRef();
@@ -28,6 +30,11 @@ function App() {
       observer.current = new IntersectionObserver((entries) => {
         if (entries[0].isIntersecting && hasMore) {
           setPageNumber((prevpageNumber) => prevpageNumber + 1);
+          if (term) {
+            getSearchResults(url2);
+          } else {
+            getImages(url1);
+          }
         }
       });
       if (x) {
@@ -58,17 +65,19 @@ function App() {
         setHasMore(data.photos.photo.length > 0);
         setLoading(false);
       }
+      if (data.photos.photo.length === 0) {
+        setMessage('No Photos Found');
+      }
     } catch (error) {
       setMessage('Something went wrong...!! Please Refresh');
     }
   };
 
   useEffect(() => {
-    const url = `https://api.flickr.com/services/rest/?method=flickr.photos.getRecent&api_key=${process.env.REACT_APP_FLICKR_KEY}&page=${pageNumber}&format=json&nojsoncallback=1`;
-    getImages(url);
+    getImages(url1);
 
     // eslint-disable-next-line
-  }, [pageNumber]);
+  }, []);
 
   const searchSuggestions = async (x) => {
     setTerm(x);
@@ -89,21 +98,22 @@ function App() {
       })
     : [];
 
-  const getSearchResults = async () => {
+  const getSearchResults = async (url2) => {
     setImages([]);
     setSearchHistory([...searchHistory, term]);
+
     const searchItems = [...new Set(searchHistory)];
     localStorage.setItem('H', JSON.stringify(searchItems));
-    const url = `https://api.flickr.com/services/rest/?method=flickr.photos.search&api_key=${process.env.REACT_APP_FLICKR_KEY}&tags=${term}&format=json&nojsoncallback=1`;
-    getImages(url);
+
+    getImages(url2);
   };
 
   useEffect(() => {
     if (debouncedTerm) {
-      getSearchResults();
+      getSearchResults(url2);
     }
     // eslint-disable-next-line
-  }, [debouncedTerm]);
+  }, [debouncedTerm, pageNumber]);
 
   return (
     <>

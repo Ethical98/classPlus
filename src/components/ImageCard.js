@@ -8,7 +8,6 @@ const ImageCard = (props) => {
   const imageRef = useRef('');
 
   useEffect(() => {
-    console.log('hello');
     imageRef.current.addEventListener('load', setSpan);
 
     // eslint-disable-next-line
